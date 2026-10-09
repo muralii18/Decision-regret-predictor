@@ -1,121 +1,106 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import Sidebar from './components/Sidebar'
+import TopBar from './components/TopBar'
+import SummaryCards from './components/SummaryCards'
+import DecisionsTable from './components/DecisionsTable'
+import { DEMO_DECISIONS, computeSummaryStats } from './data/demoData'
 import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+// Views that are planned in the sidebar but intentionally not built yet.
+const PLACEHOLDER_VIEWS = {
+  'new-prediction': {
+    title: 'New Prediction',
+    description: 'The prediction form will be implemented in a later step.',
+  },
+  history: {
+    title: 'Decision History',
+    description: 'The full decision history view will be implemented in a later step.',
+  },
+  analytics: {
+    title: 'Analytics',
+    description: 'Charts and analytics will be implemented in a later step.',
+  },
+  settings: {
+    title: 'Settings',
+    description: 'Application settings will be implemented in a later step.',
+  },
+}
+
+function DashboardView({ onNewPrediction }) {
+  const stats = computeSummaryStats(DEMO_DECISIONS)
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+      <div className="page-header">
+        <div className="page-header__text">
+          <h1>Dashboard</h1>
+          <p>Overview of your decision regret predictions.</p>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+        <button type="button" className="btn btn--primary" onClick={onNewPrediction}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          New Prediction
         </button>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <SummaryCards stats={stats} />
+      <DecisionsTable decisions={DEMO_DECISIONS} />
     </>
+  )
+}
+
+function PlaceholderView({ title, description }) {
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header__text">
+          <h1>{title}</h1>
+          <p>{description}</p>
+        </div>
+      </div>
+      <section className="placeholder">
+        <h2>Coming soon</h2>
+        <p>
+          This section is reserved in the navigation but not part of the initial dashboard build.
+          The current step delivers the dashboard UI only, using sample demo data.
+        </p>
+      </section>
+    </>
+  )
+}
+
+function App() {
+  const [activeView, setActiveView] = useState('dashboard')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  function navigate(view) {
+    setActiveView(view)
+    setSidebarOpen(false)
+  }
+
+  return (
+    <div className="app">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
+
+      <Sidebar activeView={activeView} onNavigate={navigate} open={sidebarOpen} />
+      {sidebarOpen && (
+        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} aria-hidden="true" />
+      )}
+
+      <div className="app-body">
+        <TopBar activeView={activeView} onMenuClick={() => setSidebarOpen(true)} />
+        <main className="app-content" id="main-content">
+          {activeView === 'dashboard' ? (
+            <DashboardView onNewPrediction={() => navigate('new-prediction')} />
+          ) : (
+            <PlaceholderView title={PLACEHOLDER_VIEWS[activeView].title} description={PLACEHOLDER_VIEWS[activeView].description} />
+          )}
+        </main>
+      </div>
+    </div>
   )
 }
 
