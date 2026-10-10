@@ -4,6 +4,8 @@ import TopBar from './components/TopBar'
 import SummaryCards from './components/SummaryCards'
 import DecisionsTable from './components/DecisionsTable'
 import NewDecisionForm from './components/NewDecisionForm'
+import LandingPage from './components/LandingPage'
+import AuthPlaceholder from './components/AuthPlaceholder'
 import { DEMO_DECISIONS, computeSummaryStats } from './data/demoData'
 import './App.css'
 
@@ -68,12 +70,27 @@ function PlaceholderView({ title, description }) {
 }
 
 function App() {
-  const [activeView, setActiveView] = useState('dashboard')
+  const [activeView, setActiveView] = useState('landing')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   function navigate(view) {
     setActiveView(view)
     setSidebarOpen(false)
+    window.scrollTo(0, 0)
+  }
+
+  // Public views render outside the dashboard shell (no sidebar/topbar).
+  if (activeView === 'landing') {
+    return <LandingPage onLogin={() => navigate('login')} onGetStarted={() => navigate('register')} />
+  }
+  if (activeView === 'login' || activeView === 'register') {
+    return (
+      <AuthPlaceholder
+        mode={activeView}
+        onBack={() => navigate('landing')}
+        onEnterApp={() => navigate('dashboard')}
+      />
+    )
   }
 
   let content
@@ -102,7 +119,7 @@ function App() {
       )}
 
       <div className="app-body">
-        <TopBar activeView={activeView} onMenuClick={() => setSidebarOpen(true)} />
+        <TopBar activeView={activeView} onMenuClick={() => setSidebarOpen(true)} onHome={() => navigate('landing')} />
         <main className="app-content" id="main-content">
           {content}
         </main>

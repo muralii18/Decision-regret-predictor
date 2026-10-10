@@ -113,3 +113,8 @@ button {
 .skip-link:focus {
   top: 0;
 }
+
+/* Smooth in-page scrolling for landing-page anchors */
+html {
+  scroll-behavior: smooth;
+}

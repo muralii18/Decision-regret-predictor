@@ -9,7 +9,7 @@ const VIEW_TITLES = {
   settings: 'Settings',
 }
 
-function TopBar({ activeView, onMenuClick }) {
+function TopBar({ activeView, onMenuClick, onHome }) {
   return (
     <header className="topbar">
       <div className="topbar__left">
@@ -25,7 +25,9 @@ function TopBar({ activeView, onMenuClick }) {
         </button>
         <div className="topbar__titles">
           <h2 className="topbar__page-title">{VIEW_TITLES[activeView] ?? 'Dashboard'}</h2>
-          <span className="topbar__breadcrumb">Decision Regret Predictor</span>
+          <button type="button" className="topbar__breadcrumb" onClick={onHome} title="Back to home page">
+            Decision Regret Predictor
+          </button>
         </div>
       </div>
 
