@@ -148,3 +148,19 @@
     justify-content: center;
   }
 }
+
+/* Secondary (outline) action button */
+.btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.btn--secondary:hover {
+  background: var(--color-surface-2);
+}
+
+.btn--secondary:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

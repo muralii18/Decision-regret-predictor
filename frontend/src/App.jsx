@@ -3,15 +3,12 @@ import Sidebar from './components/Sidebar'
 import TopBar from './components/TopBar'
 import SummaryCards from './components/SummaryCards'
 import DecisionsTable from './components/DecisionsTable'
+import NewDecisionForm from './components/NewDecisionForm'
 import { DEMO_DECISIONS, computeSummaryStats } from './data/demoData'
 import './App.css'
 
 // Views that are planned in the sidebar but intentionally not built yet.
 const PLACEHOLDER_VIEWS = {
-  'new-prediction': {
-    title: 'New Prediction',
-    description: 'The prediction form will be implemented in a later step.',
-  },
   history: {
     title: 'Decision History',
     description: 'The full decision history view will be implemented in a later step.',
@@ -79,6 +76,20 @@ function App() {
     setSidebarOpen(false)
   }
 
+  let content
+  if (activeView === 'dashboard') {
+    content = <DashboardView onNewPrediction={() => navigate('new-prediction')} />
+  } else if (activeView === 'new-prediction') {
+    content = <NewDecisionForm onCancel={() => navigate('dashboard')} />
+  } else {
+    content = (
+      <PlaceholderView
+        title={PLACEHOLDER_VIEWS[activeView].title}
+        description={PLACEHOLDER_VIEWS[activeView].description}
+      />
+    )
+  }
+
   return (
     <div className="app">
       <a className="skip-link" href="#main-content">
@@ -93,11 +104,7 @@ function App() {
       <div className="app-body">
         <TopBar activeView={activeView} onMenuClick={() => setSidebarOpen(true)} />
         <main className="app-content" id="main-content">
-          {activeView === 'dashboard' ? (
-            <DashboardView onNewPrediction={() => navigate('new-prediction')} />
-          ) : (
-            <PlaceholderView title={PLACEHOLDER_VIEWS[activeView].title} description={PLACEHOLDER_VIEWS[activeView].description} />
-          )}
+          {content}
         </main>
       </div>
     </div>

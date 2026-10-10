@@ -1,0 +1,330 @@
+/* New Decision form — follows the dashboard's .panel / .field design language */
+
+.decision-form {
+  padding: 22px 20px 20px;
+}
+
+.decision-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field label,
+.field__group legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 6px;
+}
+
+.field__group legend {
+  padding: 0;
+  margin-bottom: 8px;
+}
+
+.field__required {
+  color: var(--color-danger);
+}
+
+.field input,
+.field select,
+.field textarea {
+  font: inherit;
+  font-size: 14px;
+  color: var(--color-text-strong);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  width: 100%;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 72px;
+  line-height: 1.5;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+}
+
+.field input[aria-invalid='true'],
+.field select[aria-invalid='true'],
+.field textarea[aria-invalid='true'],
+.field__group[aria-invalid='true'] .confidence-options {
+  border-color: var(--color-danger);
+}
+
+.field input[aria-invalid='true']:focus,
+.field select[aria-invalid='true']:focus,
+.field textarea[aria-invalid='true']:focus {
+  box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.14);
+}
+
+/* Currency prefix input */
+.field__input-group {
+  display: flex;
+  align-items: stretch;
+}
+
+.field__prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+}
+
+.field__input-group input {
+  border-radius: 0 8px 8px 0;
+}
+
+/* Confidence radio group */
+.field__group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.confidence-options {
+  display: flex;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+}
+
+.confidence-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 0 !important;
+  padding: 9px 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--color-text);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.confidence-option:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.confidence-option input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+.confidence-option:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+}
+
+.confidence-option:has(input:focus-visible) {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Validation errors */
+.field__error {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--color-danger);
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+
+.field__error::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--color-danger);
+  border-radius: 50%;
+}
+
+/* Action buttons (shared by form + confirmation) */
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Confirmation view */
+.confirmation {
+  padding: 36px 28px;
+  text-align: center;
+}
+
+.confirmation__icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmation__icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.confirmation__title {
+  margin: 0 0 8px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--color-text-strong);
+}
+
+.confirmation__text {
+  margin: 0 auto 10px;
+  max-width: 560px;
+  font-size: 14px;
+  color: var(--color-text);
+}
+
+.confirmation__note {
+  margin: 0 auto 22px;
+  max-width: 560px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+}
+
+.confirmation__summary {
+  margin: 0 auto 4px;
+  max-width: 680px;
+  text-align: left;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.confirmation__row {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.confirmation__row:last-child {
+  border-bottom: 0;
+}
+
+.confirmation__row:nth-child(odd) {
+  background: var(--color-surface-2);
+}
+
+.confirmation__row dt {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.confirmation__row dd {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--color-text-strong);
+  overflow-wrap: anywhere;
+}
+
+.confirmation .form-actions {
+  justify-content: center;
+  border-top: 0;
+  padding-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 720px) {
+  .decision-form {
+    padding: 18px 14px 16px;
+  }
+
+  .decision-form__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .field--full {
+    grid-column: auto;
+  }
+
+  .confidence-options {
+    flex-wrap: wrap;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .confirmation {
+    padding: 26px 16px;
+  }
+
+  .confirmation__row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
