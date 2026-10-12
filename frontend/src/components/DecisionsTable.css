@@ -185,3 +185,134 @@
   color: var(--color-text-muted);
   background: var(--color-surface-2);
 }
+
+/* Actual outcome column + inline outcome form (Decision History view) */
+.outcome-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 170px;
+}
+
+.outcome-cell__date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.outcome-cell__provisional {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--color-warning);
+}
+
+.outcome-cell__note {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+  max-width: 240px;
+}
+
+.outcome-cell__empty {
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--color-text-muted);
+}
+
+.outcome-cell__actions {
+  white-space: nowrap;
+}
+
+.outcome-action-btn {
+  padding: 7px 12px;
+  font-size: 12.5px;
+  border-radius: 7px;
+}
+
+/* Inline record/edit outcome form rendered in a full-width row under the decision */
+.outcome-form-row td {
+  background: var(--color-surface-2);
+  padding: 16px 20px;
+}
+
+.outcome-form {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  padding: 16px 18px;
+  max-width: 720px;
+}
+
+.outcome-form__title {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text-strong);
+}
+
+.outcome-form__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.outcome-form__field--full {
+  grid-column: 1 / -1;
+}
+
+.outcome-form__field label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.outcome-form__field select,
+.outcome-form__field input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  font-size: 13.5px;
+  color: var(--color-text);
+}
+
+.outcome-form__field select:focus-visible,
+.outcome-form__field input:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+.outcome-form__window-note {
+  margin: 0 0 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.outcome-form__session-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.outcome-form__actions {
+  display: flex;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .outcome-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .outcome-form-row td {
+    padding: 12px 12px;
+  }
+}

@@ -11,10 +11,6 @@ import './App.css'
 
 // Views that are planned in the sidebar but intentionally not built yet.
 const PLACEHOLDER_VIEWS = {
-  history: {
-    title: 'Decision History',
-    description: 'The full decision history view will be implemented in a later step.',
-  },
   analytics: {
     title: 'Analytics',
     description: 'Charts and analytics will be implemented in a later step.',
@@ -49,6 +45,43 @@ function DashboardView({ onNewPrediction }) {
   )
 }
 
+function HistoryView({ outcomes, onSaveOutcome }) {
+  // Newest decisions first (ISO dates sort correctly as strings).
+  const sortedDecisions = [...DEMO_DECISIONS].sort((a, b) => b.date.localeCompare(a.date))
+
+  return (
+    <>
+      <div className="page-header">
+        <div className="page-header__text">
+          <h1>Decision History</h1>
+          <p>
+            All recorded decisions with their demo status and any actual outcome you capture in this
+            session. Sorted newest first.
+          </p>
+        </div>
+      </div>
+
+      <DecisionsTable
+        decisions={sortedDecisions}
+        title="Decision History"
+        subtitle="Demo statuses and risk scores are sample data — not verified outcomes or model predictions."
+        riskScoreHeader="Risk Score (demo)"
+        statusHeader="Demo Status (sample)"
+        outcomes={outcomes}
+        onRecordOutcome={onSaveOutcome}
+        footerNote={
+          'Showing ' +
+          sortedDecisions.length +
+          ' decisions — newest first. Demo statuses are sample data and are never overwritten ' +
+          'by recorded outcomes. Recorded outcomes are session-only and are not yet saved to ' +
+          'PostgreSQL; “Not reversed” remains provisional until an observation window (180 or ' +
+          '365 days) is defined and has elapsed.'
+        }
+      />
+    </>
+  )
+}
+
 function PlaceholderView({ title, description }) {
   return (
     <>
@@ -72,11 +105,19 @@ function PlaceholderView({ title, description }) {
 function App() {
   const [activeView, setActiveView] = useState('landing')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Session-only map of decisionId -> { outcome, outcomeDate, note }.
+  // Never touches DEMO_DECISIONS: demo status/riskScore stay untouched.
+  // Not persisted (no localStorage/sessionStorage); PostgreSQL comes later.
+  const [outcomes, setOutcomes] = useState({})
 
   function navigate(view) {
     setActiveView(view)
     setSidebarOpen(false)
     window.scrollTo(0, 0)
+  }
+
+  function saveOutcome(decisionId, record) {
+    setOutcomes((prev) => ({ ...prev, [decisionId]: record }))
   }
 
   // Public views render outside the dashboard shell (no sidebar/topbar).
@@ -98,6 +139,8 @@ function App() {
     content = <DashboardView onNewPrediction={() => navigate('new-prediction')} />
   } else if (activeView === 'new-prediction') {
     content = <NewDecisionForm onCancel={() => navigate('dashboard')} />
+  } else if (activeView === 'history') {
+    content = <HistoryView outcomes={outcomes} onSaveOutcome={saveOutcome} />
   } else {
     content = (
       <PlaceholderView
