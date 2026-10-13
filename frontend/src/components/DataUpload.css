@@ -1,0 +1,233 @@
+/* Historical Data Upload page — reuses .panel, .btn, .badge, .decisions-table,
+   .category-tag, .cell-* primitives from App.css / DecisionsTable.css. */
+
+.upload-panel {
+  margin-bottom: 22px;
+}
+
+.upload-picker {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 0 20px 16px;
+}
+
+.upload-picker__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.upload-picker input[type='file'] {
+  font-size: 13px;
+  color: var(--color-text);
+  max-width: 100%;
+}
+
+.upload-picker input[type='file']::file-selector-button {
+  padding: 8px 14px;
+  margin-right: 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.upload-picker input[type='file']::file-selector-button:hover {
+  background: var(--color-surface-2);
+}
+
+.upload-format-note {
+  margin: 0 20px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface-2);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.upload-format-note__title {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: var(--color-text-strong);
+}
+
+.upload-format-note p {
+  margin: 0 0 6px;
+}
+
+.upload-format-note ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.upload-format-note code {
+  font-size: 11.5px;
+  word-break: break-word;
+}
+
+.upload-privacy-note {
+  margin: 0 20px 20px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+/* Status panels (reading, file errors, all-valid) */
+.upload-status {
+  padding: 18px 20px;
+  margin-bottom: 22px;
+}
+
+.upload-status__title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-strong);
+}
+
+.upload-status p {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--color-text);
+}
+
+.upload-status--error {
+  border-color: var(--color-danger);
+}
+
+.upload-status--error .upload-status__title {
+  color: var(--color-danger);
+}
+
+.upload-status--ok {
+  border-color: var(--color-success);
+}
+
+.upload-status__hint {
+  margin-top: 8px !important;
+  font-size: 12.5px !important;
+  color: var(--color-text-muted) !important;
+}
+
+/* Summary stat cards */
+.upload-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.upload-stat {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 14px 16px;
+}
+
+.upload-stat__value {
+  margin: 0 0 2px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text-strong);
+}
+
+.upload-stat__label {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.upload-stat--success .upload-stat__value {
+  color: var(--color-success);
+}
+
+.upload-stat--danger .upload-stat__value {
+  color: var(--color-danger);
+}
+
+.upload-stat--warning .upload-stat__value {
+  color: var(--color-warning);
+}
+
+.upload-stat--indigo .upload-stat__value {
+  color: var(--color-primary);
+}
+
+.upload-stat--muted .upload-stat__value {
+  color: var(--color-text-muted);
+}
+
+.upload-summary-note {
+  margin: 0 0 22px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.upload-summary-note code {
+  font-size: 11.5px;
+}
+
+/* Preview + error panels */
+.upload-preview td {
+  white-space: nowrap;
+}
+
+.upload-preview__rownum {
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.upload-preview__unknown {
+  color: var(--color-text-muted);
+}
+
+.upload-errors {
+  margin-top: 22px;
+}
+
+.upload-error-list {
+  margin: 0;
+  padding: 14px 20px 18px 36px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.upload-error-list li {
+  margin-bottom: 4px;
+}
+
+.upload-errors .upload-error-list {
+  padding-top: 0;
+}
+
+@media (max-width: 900px) {
+  .upload-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .upload-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .upload-picker {
+    padding: 0 14px 14px;
+  }
+
+  .upload-format-note,
+  .upload-privacy-note {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+}

@@ -24,6 +24,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    id: 'upload',
+    label: 'Historical Data Upload',
+    icon: (
+      <>
+        <path d="M12 15V4" />
+        <path d="m7.5 8.5 4.5-4.5 4.5 4.5" />
+        <path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15" />
+      </>
+    ),
+  },
+  {
     id: 'history',
     label: 'Decision History',
     icon: (

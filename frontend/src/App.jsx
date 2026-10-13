@@ -4,6 +4,7 @@ import TopBar from './components/TopBar'
 import SummaryCards from './components/SummaryCards'
 import DecisionsTable from './components/DecisionsTable'
 import NewDecisionForm from './components/NewDecisionForm'
+import DataUpload from './components/DataUpload'
 import LandingPage from './components/LandingPage'
 import AuthPlaceholder from './components/AuthPlaceholder'
 import { DEMO_DECISIONS, computeSummaryStats } from './data/demoData'
@@ -139,6 +140,8 @@ function App() {
     content = <DashboardView onNewPrediction={() => navigate('new-prediction')} />
   } else if (activeView === 'new-prediction') {
     content = <NewDecisionForm onCancel={() => navigate('dashboard')} />
+  } else if (activeView === 'upload') {
+    content = <DataUpload />
   } else if (activeView === 'history') {
     content = <HistoryView outcomes={outcomes} onSaveOutcome={saveOutcome} />
   } else {
