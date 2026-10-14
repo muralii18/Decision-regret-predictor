@@ -1,0 +1,26 @@
+{
+  "name": "decision-regret-predictor-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Express + PostgreSQL backend for the Decision Regret Predictor (talks to the FastAPI ML service)",
+  "type": "module",
+  "engines": {
+    "node": ">=21"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "migrate": "node src/db/migrate.js",
+    "test": "node --test \"tests/*.test.js\"",
+    "check": "node --check src/config.js && node --check src/app.js && node --check src/server.js && node --check src/db/pool.js && node --check src/db/migrate.js && node --check src/db/repo.js && node --check src/ml/client.js && node --check src/validation/validate.js && node --check src/routes/health.js && node --check src/routes/decisions.js && node --check src/middleware/errors.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "pg": "^8.13.1"
+  },
+  "devDependencies": {
+    "embedded-postgres": "17.10.0-beta.17"
+  }
+}
