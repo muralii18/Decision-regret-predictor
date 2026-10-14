@@ -4,6 +4,7 @@ import './TopBar.css'
 const VIEW_TITLES = {
   dashboard: 'Dashboard',
   'new-prediction': 'New Prediction',
+  results: 'Prediction Results',
   upload: 'Historical Data Upload',
   history: 'Decision History',
   analytics: 'Analytics',

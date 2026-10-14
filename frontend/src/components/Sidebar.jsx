@@ -24,6 +24,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    id: 'results',
+    label: 'Prediction Results',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="8.5" />
+        <circle cx="12" cy="12" r="4.5" />
+        <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+      </>
+    ),
+  },
+  {
     id: 'upload',
     label: 'Historical Data Upload',
     icon: (
