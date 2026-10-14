@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+# The synthetic prototype dataset is tracked; all other raw data stays private
+!data/raw/decisions_synthetic_v1.csv
+!data/processed/.gitkeep
+models/*.pkl
+models/*.joblib
+models/*.sav
