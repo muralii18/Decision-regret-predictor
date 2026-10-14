@@ -5,13 +5,12 @@ will be reversed in the future.
 
 ## Status
 
-**Baseline training pipeline implemented (experimental).** A small
-**synthetic** dataset exists for pipeline prototyping and a baseline
-logistic-regression pipeline can be trained (see Training below). The
-dataset and every metric derived from it are experimental — they are not
-evidence of accuracy. The FastAPI service still does not generate
-predictions (`POST /predict` returns `501 Not Implemented` until the model
-is wired into the service as described under Consuming the model).
+**Training pipeline + prediction API implemented (experimental).** A small
+**synthetic** dataset exists for pipeline prototyping, a baseline
+logistic-regression pipeline can be trained (see Training below), and the
+FastAPI service serves real probabilities from the saved artifact via
+`POST /predict` (see Prediction API). The dataset and every metric derived
+from it are experimental — they are not evidence of accuracy.
 
 ## Layout
 
@@ -24,8 +23,8 @@ ml/
 ├── models/           # serialized model artifacts (ignored by git)
 ├── preprocessing/    # data loading, cleaning, encoding, splitting
 ├── training/         # baseline training pipeline (train.py)
-├── prediction/       # FastAPI service (skeleton) + inference logic
-├── tests/            # pytest tests (service wiring only for now)
+├── prediction/       # FastAPI service (serves the trained pipeline)
+├── tests/            # pytest tests (preprocessing, training, API)
 ├── requirements.txt
 └── README.md
 ```
@@ -41,19 +40,38 @@ python3 -m venv .venv            # already done
 .venv/bin/pip install -r ml/requirements.txt   # already done
 ```
 
-## Run the API (skeleton)
+## Run the API
+
+Train the model first if `models/regret_risk_model.joblib` does not exist
+(the artifact is git-ignored; `/predict` returns `503` without it).
 
 ```bash
+# Linux / macOS (from the repository root)
+.venv/bin/python ml/training/train.py          # train -> models/regret_risk_model.joblib
 cd ml
 ../.venv/bin/uvicorn prediction.main:app --reload
-# docs: http://127.0.0.1:8000/docs
+# interactive docs: http://127.0.0.1:8000/docs
+```
+
+Windows PowerShell (do not use Unix `source`/`activate` syntax here — call
+the venv executables directly, or activate with `.\.venv\Scripts\Activate.ps1`):
+
+```powershell
+# from the repository root
+.\.venv\Scripts\python.exe ml\training\train.py
+cd ml
+..\.venv\Scripts\uvicorn.exe prediction.main:app --reload
+# interactive docs: http://127.0.0.1:8000/docs
 ```
 
 ## Tests
 
 ```bash
-cd ml
-../.venv/bin/python -m pytest tests/ -v
+# Linux / macOS
+cd ml && ../.venv/bin/python -m pytest tests/ -v
+
+# Windows PowerShell
+cd ml; ..\.venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
 ## Dataset
@@ -229,38 +247,82 @@ Reproduce with `../.venv/bin/python training/train.py` — training is
 deterministic (`random_state=42`, fixed split), so repeated runs report the
 identical metrics.
 
-### Consuming the model from FastAPI (next integration step)
+## Prediction API (implemented)
 
-`prediction/main.py` is intentionally still a skeleton (its tests assert
-`501 Not Implemented`), so the service was not modified in this step. The
-wiring step will:
+`prediction/main.py` serves the trained pipeline. It **never trains**: the
+artifact (`models/regret_risk_model.joblib`, path resolved from the source
+file, not the cwd) is loaded lazily on first use and cached. Importing or
+starting the service does not create, retrain or overwrite any file.
 
-1. On service startup, `joblib.load(ml/models/regret_risk_model.joblib)`;
-   set a `MODEL_TRAINED` flag from whether the load succeeded.
-2. `POST /predict` accepts a JSON object with exactly the seven decision-time
-   features (`category`, `estimated_cost_usd`, `num_alternatives`,
-   `confidence_level`, `business_context`, `expected_benefits`,
-   `identified_risks`) — never outcome/context columns.
-3. Build a one-row DataFrame, call `pipeline.predict_proba(...)[:, 1]`, and
-   return `{probability_of_reversal, threshold, model_version,
-   dataset: "synthetic", disclaimer}` with the same caveats as this README.
-4. Reject payloads missing any of the seven features with a clear 422.
+### `POST /predict`
+
+Request body — exactly the seven decision-time features, with the same
+constraints preprocessing enforces (the six categories, Low/Medium/High
+confidence, cost > 0, non-negative integer alternatives, non-empty texts).
+Unknown fields — including `target_reversed`, `decision_id`,
+`decision_date` and `observation_window_days` — are rejected (422), so
+outcome information can never reach the model through the API.
+
+```json
+{
+  "category": "Supplier Selection",
+  "estimated_cost_usd": 250000.0,
+  "num_alternatives": 4,
+  "confidence_level": "Medium",
+  "business_context": "Selected a new logistics vendor ahead of a contract renewal deadline.",
+  "expected_benefits": "Lower per-unit shipping cost and faster delivery times.",
+  "identified_risks": "Migration effort and single-provider dependency."
+}
+```
+
+Response (`200`) — the probability is the classifier's probability for
+class 1 (`target_reversed = 1`); the column is resolved through the fitted
+classifier's `classes_` ordering, not assumed:
+
+```json
+{
+  "probability_of_reversal": 0.3431,
+  "probability_percent": 34.31,
+  "predicted_class": 0,
+  "predicted_label": "Not reversed",
+  "threshold": 0.5,
+  "dataset": "synthetic",
+  "disclaimer": "Experimental prototype: the model was trained on a small synthetic dataset (39 labelled rows) and is not evidence of accuracy or production readiness. A probability is an estimate, not a guarantee of the real outcome. No risk level, contributing factors or confidence interval is provided."
+}
+```
+
+`predicted_class` is the classifier's own binary decision at its default
+0.5 threshold — **not** a risk level. The API deliberately returns no risk
+classification, contributing factors, SHAP values, confidence intervals or
+accuracy claims.
+
+Errors:
+
+| Status | When | Body |
+|---|---|---|
+| `422` | Missing, malformed or unsupported fields (FastAPI/Pydantic) | `detail` list of field errors |
+| `503` | Model artifact missing or unreadable — **no probability is ever fabricated** | generic `detail`, no local paths, stack traces or exception text |
+| `500` | Prediction itself failed unexpectedly | generic `detail` only |
+
+`GET /health` and `GET /` stay up in every case and report
+`model_loaded: true|false`. Interactive docs at `/docs`.
 
 ### Tests
 
-```bash
-cd ml
-../.venv/bin/python -m pytest tests/ -v
-```
-
-46 tests (26 preprocessing, 16 training, 4 service) cover schema validation,
-unknown-outcome exclusion, feature/target separation, deterministic
-chronological splitting, leakage prevention (encoders proven to be fit on
-training data only — including on the **saved artifact**), deterministic
-training, reload of the saved pipeline with finite probabilities in [0, 1],
-recomputation of reported metrics, useful errors for small/invalid/single-
-class datasets, and import safety (training never runs when
-`training.train` or the prediction service is imported).
+60 tests (26 preprocessing, 16 training, 15 API, 3 service) cover schema
+validation, unknown-outcome exclusion, feature/target separation,
+deterministic chronological splitting, leakage prevention (encoders proven
+to be fit on training data only — including on the **saved artifact**),
+deterministic training, reload of the saved pipeline with finite
+probabilities in [0, 1], recomputation of reported metrics, useful errors
+for small/invalid/single-class datasets, import safety (training never runs
+when `training.train` or the prediction service is imported), and — for the
+API — end-to-end requests against an **isolated temporary model** (the
+trained artifact is not required to run the suite): valid requests match
+the saved pipeline's own class-1 probability, the class column follows
+`classifier.classes_`, missing/malformed/unsupported fields and leaked
+outcome columns return 422, and missing/corrupt/non-pipeline artifacts
+return a path-free 503 without any fabricated probability.
 
 ## Next step
 
@@ -270,7 +332,9 @@ class datasets, and import safety (training never runs when
    section).
 3. ~~Implement `training/train.py`~~ — done (see Training section); metrics
    are experimental because the dataset is synthetic and tiny.
-4. Wire the saved pipeline into `prediction/main.py` so `POST /predict`
-   returns a probability (with disclaimers) instead of `501`.
+4. ~~Wire the saved pipeline into `prediction/main.py`~~ — done (see
+   Prediction API section).
 5. Grow the dataset (real, de-identified records) before making any claim
    about model quality; add cross-validation once row counts allow it.
+6. Next project step: the Node.js/Express + PostgreSQL backend that stores
+   decisions and calls this ML service (frontend stays unchanged).

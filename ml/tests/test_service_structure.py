@@ -1,10 +1,11 @@
-"""Structure tests for the ML service skeleton.
+"""Service wiring tests for the FastAPI prediction API.
 
-These tests verify wiring only (routes, status reporting). They make no
-claims about model quality because no model exists yet.
+Routes and status reporting only; model behaviour, validation and safety are
+covered in test_prediction_api.py. No test asserts model quality — the
+dataset is synthetic and tiny.
 """
 
-from prediction.main import app, health, predict, root
+from prediction.main import app, health, root
 
 
 def test_app_exposes_expected_routes():
@@ -12,19 +13,15 @@ def test_app_exposes_expected_routes():
     assert {"/", "/health", "/predict"} <= paths
 
 
-def test_root_reports_skeleton_status():
+def test_root_reports_service_status():
     body = root()
-    assert body["status"] == "skeleton"
-    assert body["model_trained"] is False
+    assert body["status"] == "ok"
+    # Loadable-model state depends on whether the (git-ignored) local
+    # artifact exists — only its type is asserted, never its value.
+    assert isinstance(body["model_loaded"], bool)
 
 
-def test_health_reports_model_not_trained():
+def test_health_reports_ok_and_model_state():
     body = health()
     assert body["status"] == "ok"
-    assert body["model_trained"] is False
-
-
-def test_predict_returns_not_implemented():
-    response = predict()
-    assert response.status_code == 501
-    assert response.body is not None
+    assert isinstance(body["model_loaded"], bool)
