@@ -7,6 +7,7 @@ import {
   createPrediction,
   getBaseUrl,
   getDecision,
+  getHealth,
   listDecisions,
   recordOutcome,
   toDecisionPayload,
@@ -175,6 +176,49 @@ describe('recordOutcome', () => {
       outcome: 'reversed',
       outcome_date: '2026-10-10',
       note: 'Cancelled',
+    })
+  })
+})
+
+describe('getHealth', () => {
+  test('GET /health by default never probes the ML service', async () => {
+    const mock = installFetchMock([
+      {
+        method: 'GET',
+        path: '/health',
+        body: { status: 'ok', database: 'ok', ml_service: 'configured', ml_probed: false },
+      },
+    ])
+    const health = await getHealth()
+    expect(health.ml_service).toBe('configured')
+    expect(mock.calls[0].url).toBe('http://localhost:3001/health')
+    expect(mock.calls[0].url).not.toContain('ml=1')
+  })
+
+  test('probeMl: true requests /health?ml=1 for a real ML probe', async () => {
+    const mock = installFetchMock([
+      {
+        method: 'GET',
+        path: '/health',
+        body: {
+          status: 'ok',
+          database: 'ok',
+          ml_service: 'ok',
+          ml_probed: true,
+          ml_model_loaded: true,
+        },
+      },
+    ])
+    const health = await getHealth({ probeMl: true })
+    expect(mock.calls[0].url).toBe('http://localhost:3001/health?ml=1')
+    expect(health.ml_model_loaded).toBe(true)
+  })
+
+  test('an unreachable backend surfaces the friendly network error', async () => {
+    installFetchMock([{ method: 'GET', path: '/health', networkError: true }])
+    await expect(getHealth({ probeMl: true })).rejects.toMatchObject({
+      name: 'ApiError',
+      code: 'network_error',
     })
   })
 })

@@ -50,4 +50,9 @@ demo data when the API fails — the Dashboard and Decision History render
 saved backend rows only; `src/data/demoData.js` is illustrative reference
 data and is not presented as model output.
 
+The landing page's live service status (`src/components/ServiceStatus.jsx`)
+probes `GET /health?ml=1` and reports the real state of PostgreSQL, the
+Express backend and the ML service — "the model is ready" is only shown
+after a probe confirmed the trained model is loaded.
+
 See the root `README.md` for the required services and their startup order.

@@ -85,6 +85,37 @@ export class MlClient {
     this.fetchImpl = fetchImpl
   }
 
+  /**
+   * GET /health — liveness probe used by the backend's `GET /health?ml=1`
+   * endpoint. Never throws: returns a small status object so health checks
+   * stay fast and cannot fail on a down service.
+   *
+   * @returns {Promise<{ status: 'ok' | 'no_model' | 'unhealthy' | 'unreachable',
+   *                     modelLoaded: boolean }>}
+   */
+  async probeHealth() {
+    try {
+      const response = await this.fetchImpl(`${this.baseUrl}/health`, {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+        // Health probes must be quick; cap below the predict timeout.
+        signal: AbortSignal.timeout(Math.min(this.timeoutMs, 1500)),
+      })
+      if (!response.ok) {
+        return { status: 'unhealthy', modelLoaded: false }
+      }
+      const body = await response.json()
+      if (body && body.model_loaded === true) {
+        return { status: 'ok', modelLoaded: true }
+      }
+      // The service answered but reports no loadable trained artifact —
+      // /predict would return 503, so the model is NOT available.
+      return { status: 'no_model', modelLoaded: false }
+    } catch {
+      return { status: 'unreachable', modelLoaded: false }
+    }
+  }
+
   /** POST /predict with the seven features; returns the validated response. */
   async predict(decision) {
     const url = `${this.baseUrl}/predict`

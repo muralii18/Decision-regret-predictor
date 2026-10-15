@@ -63,6 +63,93 @@ test('GET /health degrades honestly when the database is unreachable', async () 
   })
 })
 
+test('GET /health without ?ml=1 never contacts the ML service', async () => {
+  await withAppServer(app, async (base) => {
+    const body = await (await fetch(`${base}/health`)).json()
+    assert.equal(body.ml_service, 'configured')
+    assert.equal(body.ml_probed, false)
+    assert.equal(body.ml_model_loaded, undefined)
+    assert.equal(mlServer.requests.length, 0)
+  })
+})
+
+test('GET /health?ml=1 probes the ML service and reports the model loaded', async () => {
+  if (mlServer) await mlServer.close()
+  mlServer = await startFakeMlServer(async ({ url }) => {
+    if (url.startsWith('/health')) {
+      return {
+        status: 200,
+        body: { status: 'ok', model_loaded: true, detail: 'Service is reachable and the trained model is loaded.' },
+      }
+    }
+    return { status: 200, body: ML_SUCCESS_BODY }
+  })
+  const ml = new MlClient({ baseUrl: mlServer.baseUrl, timeoutMs: 1000 })
+  app = createApp({ repo, ml, config: testConfig({ mlServiceUrl: mlServer.baseUrl }), logger: silentLogger })
+
+  await withAppServer(app, async (base) => {
+    const body = await (await fetch(`${base}/health?ml=1`)).json()
+    assert.equal(body.status, 'ok')
+    assert.equal(body.database, 'ok')
+    assert.equal(body.ml_probed, true)
+    assert.equal(body.ml_service, 'ok')
+    assert.equal(body.ml_model_loaded, true)
+    assert.equal(mlServer.requests.filter((r) => r.url.startsWith('/health')).length, 1)
+  })
+})
+
+test('GET /health?ml=1 reports no_model when the service has no trained artifact', async () => {
+  if (mlServer) await mlServer.close()
+  mlServer = await startFakeMlServer(async ({ url }) => {
+    if (url.startsWith('/health')) {
+      return {
+        status: 200,
+        body: { status: 'ok', model_loaded: false, detail: 'Service is reachable, but no trained model artifact is available.' },
+      }
+    }
+    return { status: 200, body: ML_SUCCESS_BODY }
+  })
+  const ml = new MlClient({ baseUrl: mlServer.baseUrl, timeoutMs: 1000 })
+  app = createApp({ repo, ml, config: testConfig({ mlServiceUrl: mlServer.baseUrl }), logger: silentLogger })
+
+  await withAppServer(app, async (base) => {
+    const body = await (await fetch(`${base}/health?ml=1`)).json()
+    // The ML service answers, but predictions would 503 — not "available".
+    assert.equal(body.ml_service, 'no_model')
+    assert.equal(body.ml_model_loaded, false)
+  })
+})
+
+test('GET /health?ml=1 reports unreachable when the ML service is down', async () => {
+  const downPort = await closedPort()
+  const downApp = createApp({
+    repo,
+    ml: new MlClient({ baseUrl: `http://127.0.0.1:${downPort}`, timeoutMs: 300 }),
+    config: testConfig({ mlServiceUrl: `http://127.0.0.1:${downPort}` }),
+    logger: silentLogger,
+  })
+  await withAppServer(downApp, async (base) => {
+    const body = await (await fetch(`${base}/health?ml=1`)).json()
+    assert.equal(body.status, 'ok') // backend + database are fine
+    assert.equal(body.ml_service, 'unreachable') // but the ML service is not
+    assert.equal(body.ml_model_loaded, false)
+  })
+})
+
+test('GET /health?ml=1 with no ML URL configured reports not_configured', async () => {
+  const noMlApp = createApp({
+    repo,
+    ml: new MlClient({ baseUrl: 'http://127.0.0.1:1', timeoutMs: 300 }),
+    config: testConfig({ mlServiceUrl: '' }),
+    logger: silentLogger,
+  })
+  await withAppServer(noMlApp, async (base) => {
+    const body = await (await fetch(`${base}/health?ml=1`)).json()
+    assert.equal(body.ml_service, 'not_configured')
+    assert.equal(body.ml_model_loaded, undefined)
+  })
+})
+
 test('POST /api/decisions creates and echoes a valid decision', async () => {
   await withAppServer(app, async (base) => {
     const response = await createDecision(base)

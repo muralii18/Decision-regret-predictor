@@ -38,6 +38,9 @@ docker run -d --name drp-pg -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:
 ```
 
 ```powershell
+# same server from PowerShell (identical Docker command):
+docker run -d --name drp-pg -p 5432:5432 -e POSTGRES_PASSWORD=password postgres:17
+
 cd backend
 Copy-Item .env.example .env    # set DATABASE_URL (placeholders only in the example)
 npm install                    # first run only
@@ -58,9 +61,11 @@ cd ml && ../.venv/bin/uvicorn prediction.main:app --reload    # :8000/docs
 ```
 
 ```powershell
-.\.venv\Scripts\python.exe ml\training\train.py
+py -m venv .venv                                     # first run only (Python launcher)
+.venv\Scripts\python.exe -m pip install -r ml\requirements.txt  # first run only
+.venv\Scripts\python.exe ml\training\train.py        # creates the artifact
 cd ml
-..\\.venv\Scripts\uvicorn.exe prediction.main:app --reload
+..\.venv\Scripts\uvicorn.exe prediction.main:app --reload        # :8000/docs
 ```
 
 ### 3. Express backend (reaches PostgreSQL and FastAPI)
@@ -77,6 +82,13 @@ npm run dev
 `backend/.env` must set `DATABASE_URL` (step 1) and `ML_SERVICE_URL`
 (default `http://127.0.0.1:8000`). Check: `GET http://localhost:3001/health`
 → `{ "status": "ok", "database": "ok", "ml_service": "configured" }`.
+
+`GET /health?ml=1` opts in to a **real ML probe** and reports `ml_service`
+as `ok` (service reachable **and** model loaded), `no_model` (service up,
+artifact missing → `/predict` would 503), `unreachable`, `unhealthy` or
+`not_configured`, plus `ml_model_loaded`. The landing page's live service
+status is built from this endpoint — it never claims the model is
+available when a service is down.
 
 ### 4. React/Vite frontend (reaches Express)
 
@@ -120,6 +132,10 @@ The backend's `CORS_ORIGIN` must include the frontend origin
 6. Failures are honest: if FastAPI/model is down nothing is saved or shown;
    if PostgreSQL/Express is down the UI shows the error and never falls back
    to demo data.
+7. The landing page shows a **live service status** (`GET /health?ml=1`):
+   "all services online" is only shown after a probe confirmed the ML
+   service and its trained model; otherwise it reports exactly which
+   service is offline, unreachable or missing its model.
 
 ## Tests
 

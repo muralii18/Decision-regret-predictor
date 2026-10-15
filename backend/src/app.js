@@ -29,7 +29,7 @@ export function createApp({ repo, ml, config, logger = console }) {
     next()
   })
 
-  app.use('/health', healthRouter({ repo, config }))
+  app.use('/health', healthRouter({ repo, config, ml }))
   app.use('/api/decisions', decisionsRouter({ repo, ml }))
 
   app.use(notFoundHandler)

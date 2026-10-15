@@ -254,12 +254,28 @@ describe('navigation and placeholders', () => {
     installFetchMock([
       {
         method: 'GET',
+        path: '/health',
+        status: 200,
+        body: {
+          status: 'ok',
+          database: 'ok',
+          ml_service: 'ok',
+          ml_probed: true,
+          ml_model_loaded: true,
+        },
+      },
+      {
+        method: 'GET',
         path: '/api/decisions',
         status: 200,
         body: { data: [], pagination: { limit: 20, offset: 0, total: 0 } },
       },
     ])
     render(<App />)
+
+    // Live integration status replaces the old "Model not yet connected" label.
+    expect(await screen.findByText('All services online — the model is ready')).toBeTruthy()
+    expect(screen.queryByText('Model not yet connected')).toBeNull()
 
     expect(screen.getAllByRole('button', { name: 'Get Started' }).length).toBeGreaterThan(0)
     fireEvent.click(screen.getAllByRole('button', { name: 'Get Started' })[0])

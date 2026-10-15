@@ -74,7 +74,7 @@ rejected, so outcome/label columns can never sneak into decision input.
 
 | Method & path | Purpose |
 |---|---|
-| `GET /health` | `{ status, database: ok\|unavailable, ml_service }` |
+| `GET /health` | `{ status, database: ok\|unavailable, ml_service }` — `ml_service: configured\|not_configured` (configuration only; never calls the ML service). With `?ml=1` the endpoint performs a **real ML probe** and reports `ml_service: ok\|no_model\|unreachable\|unhealthy` plus `ml_model_loaded` — used by the frontend landing page's live service status |
 | `POST /api/decisions` | Create a decision (`201` + row). Body: `title`, `decision_date?` (ISO, not future, defaults to today), `category`, `estimated_cost_usd` (> 0), `num_alternatives` (int ≥ 0), `confidence_level`, `business_context`, `expected_benefits`, `identified_risks` |
 | `GET /api/decisions?limit=&offset=` | History, newest first; `{ data, pagination }` |
 | `GET /api/decisions/:id` | Decision + `outcome` + `predictions` |

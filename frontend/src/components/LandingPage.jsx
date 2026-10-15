@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ServiceStatus from './ServiceStatus'
 import './LandingPage.css'
 
 const FEATURES = [
@@ -17,7 +18,7 @@ const FEATURES = [
   {
     title: 'Reversal-risk estimation',
     description:
-      'The core idea: estimate how likely a decision is to be reversed in the future. The machine learning model is in development and not yet connected — no scores are produced today.',
+      'The core idea: estimate how likely a decision is to be reversed in the future. Every saved decision is scored by the trained model through the connected backend, and each result carries the model disclaimer.',
     icon: (
       <>
         <path d="M12 4 3.5 19h17L12 4Z" />
@@ -51,7 +52,7 @@ const FEATURES = [
   {
     title: 'Risk drivers in context',
     description:
-      'Cost, number of alternatives and decision-maker confidence give the future model meaningful signals — and give reviewers a clear picture of each call.',
+      'Cost, number of alternatives and decision-maker confidence give the model meaningful signals — and give reviewers a clear picture of each call.',
     icon: (
       <>
         <path d="M4 19h16" />
@@ -90,7 +91,7 @@ const STEPS = [
   {
     title: 'Estimate reversal risk',
     description:
-      'Once the model is trained and connected, it will analyse the record against historical patterns and estimate the risk of a future reversal.',
+      'The trained model analyses the record against historical patterns and estimates the risk of a future reversal — returned as a probability together with the model disclaimer.',
   },
   {
     title: 'Learn from outcomes',
@@ -226,9 +227,11 @@ function LandingPage({ onLogin, onGetStarted }) {
               </p>
             </div>
 
-            {/* Abstract interface preview (decorative, no scores or results) */}
-            <div className="hero__preview" aria-hidden="true">
-              <div className="hero-preview">
+            {/* Decorative interface preview (no scores or results) with the live service status
+                underneath — this replaces the old static "Model not yet connected" label with the
+                result of a real health check of the backend, database and ML service. */}
+            <div className="hero__preview">
+              <div className="hero-preview" aria-hidden="true">
                 <div className="hero-preview__chrome">
                   <span />
                   <span />
@@ -250,13 +253,10 @@ function LandingPage({ onLogin, onGetStarted }) {
                     <span className="skeleton skeleton--md" />
                     <span className="skeleton" />
                     <span className="skeleton skeleton--short" />
-                    <div className="hero-preview__status">
-                      <span className="hero-preview__dot" />
-                      Model not yet connected
-                    </div>
                   </div>
                 </div>
               </div>
+              <ServiceStatus />
             </div>
           </div>
         </section>
@@ -268,8 +268,8 @@ function LandingPage({ onLogin, onGetStarted }) {
               <span className="section__eyebrow">Features</span>
               <h2 className="section__title">Everything a regret-aware decision needs</h2>
               <p className="section__lead">
-                A structured workflow for capturing decisions today — and the foundation for
-                machine-learning risk estimates tomorrow.
+                A structured workflow for capturing decisions — and machine-learning reversal-risk
+                estimates for every decision you save.
               </p>
             </div>
             <div className="features-grid">
@@ -295,8 +295,8 @@ function LandingPage({ onLogin, onGetStarted }) {
               <span className="section__eyebrow">How it works</span>
               <h2 className="section__title">From decision record to risk estimate</h2>
               <p className="section__lead">
-                Four steps that turn everyday decisions into a dataset — and, once the model is
-                connected, into reversal-risk estimates.
+                Four steps that turn everyday decisions into a dataset — and, through the connected
+                model, into reversal-risk estimates.
               </p>
             </div>
             <ol className="steps">
@@ -343,7 +343,7 @@ function LandingPage({ onLogin, onGetStarted }) {
           <div className="cta-band__inner">
             <div>
               <h2>Capture your first decision in minutes</h2>
-              <p>Start with the decision dashboard — no account or backend required for this preview.</p>
+              <p>No account is required — sign-in is a placeholder, and decisions are saved through your own local backend (see the README to start the services).</p>
             </div>
             <button type="button" className="btn btn--light btn--lg" onClick={onGetStarted}>
               Get Started
@@ -367,8 +367,8 @@ function LandingPage({ onLogin, onGetStarted }) {
             </button>
           </nav>
           <p className="landing__footer-note">
-            Concept build — not yet connected to a backend or a trained model. &copy; 2026 Decision
-            Regret Predictor.
+            Local-development build — no authentication; predictions come from an experimental
+            model trained on a small synthetic dataset. &copy; 2026 Decision Regret Predictor.
           </p>
         </div>
       </footer>

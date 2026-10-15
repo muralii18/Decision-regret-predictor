@@ -174,3 +174,15 @@ export async function recordOutcome(id, { outcome, outcomeDate = null, note = nu
   if (note) body.note = note
   return request(`/api/decisions/${requireId(id)}/outcomes`, { method: 'POST', body })
 }
+
+/**
+ * GET /health — backend health ({ status, database, ml_service, ... }).
+ *
+ * With `probeMl: true` the request is `GET /health?ml=1`, which makes the
+ * backend perform a real probe of the ML service instead of only reporting
+ * its configuration. That is what lets the UI say the model is available
+ * (or not) accurately instead of assuming it.
+ */
+export function getHealth({ probeMl = false } = {}) {
+  return request(`/health${probeMl ? '?ml=1' : ''}`)
+}
