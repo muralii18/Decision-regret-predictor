@@ -34,8 +34,11 @@ function TopBar({ activeView, onMenuClick, onHome }) {
       </div>
 
       <div className="topbar__right">
-        <span className="topbar__demo-badge" title="This build shows sample data only">
-          Demo data
+        <span
+          className="topbar__demo-badge"
+          title="Local development build — authentication is not implemented"
+        >
+          Local dev
         </span>
         <div className="topbar__profile">
           <span className="topbar__avatar" aria-hidden="true">{DEMO_USER.initials}</span>

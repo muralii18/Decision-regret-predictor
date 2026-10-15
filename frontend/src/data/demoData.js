@@ -1,9 +1,10 @@
 // ---------------------------------------------------------------------------
-// DEMO DATA — illustrative sample records for layout/UX preview only.
-// No backend, ML model or database is connected yet. These values are static
-// and must be replaced with real API data in a later step.
-// The risk scores and statuses below are hand-written illustrative values for
-// layout preview only — they are NOT predictions from a trained model.
+// DEMO DATA — illustrative sample records kept for layout/UX reference only.
+// The Dashboard and Decision History no longer render these: they load real
+// rows from the backend (see src/lib/api.js). The risk scores and statuses
+// below are hand-written illustrative values — they are NOT predictions from
+// a trained model and are never presented as such. Only the formatting and
+// risk-level helpers are still used by components.
 // ---------------------------------------------------------------------------
 
 export const DEMO_USER = {

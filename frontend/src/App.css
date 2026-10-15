@@ -85,6 +85,40 @@
   outline-offset: 2px;
 }
 
+/* Header-side action buttons (e.g. Prediction Results navigation) */
+.page-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Shared alert banners for API errors (dashboard, history, forms, results) */
+.app-alert {
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
+.app-alert--error {
+  border-color: var(--color-danger);
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+/* Centered action row inside empty-state placeholders */
+.history__empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+
 /* Placeholder pages for not-yet-built sections */
 .placeholder {
   background: var(--color-surface);

@@ -1,5 +1,13 @@
 /* New Decision form — follows the dashboard's .panel / .field design language */
 
+/* In-flight status message while the form talks to the API */
+.form-status {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
 .decision-form {
   padding: 22px 20px 20px;
 }
@@ -203,6 +211,12 @@
 .confirmation {
   padding: 36px 28px;
   text-align: center;
+}
+
+/* Warning variant: decision saved, but no prediction is available */
+.confirmation__icon--warning {
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .confirmation__icon {

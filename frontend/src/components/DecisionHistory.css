@@ -1,0 +1,14 @@
+/* Decision History — pagination + empty-state actions (reuses .placeholder) */
+
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.pager__status {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

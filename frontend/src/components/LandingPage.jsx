@@ -220,8 +220,9 @@ function LandingPage({ onLogin, onGetStarted }) {
                 </a>
               </div>
               <p className="hero__disclaimer">
-                Early-stage product — the prediction model is still in development. Current screens
-                run on clearly marked sample data and no predictions are generated yet.
+                Early-stage product — predictions are produced by an experimental model trained on
+                a small synthetic dataset and are shown with its disclaimer. They are estimates,
+                not evidence of accuracy.
               </p>
             </div>
 

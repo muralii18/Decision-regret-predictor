@@ -22,6 +22,26 @@
   gap: 10px;
 }
 
+/* Source chip: makes live vs illustrative values unmistakable */
+.summary-card__chip {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+}
+
+.summary-card__chip--live {
+  border-color: var(--color-success);
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
 .summary-card__icon {
   width: 36px;
   height: 36px;

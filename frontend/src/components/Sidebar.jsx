@@ -122,8 +122,8 @@ function Sidebar({ activeView, onNavigate, open }) {
       </nav>
 
       <div className="sidebar__footer">
-        <span className="sidebar__demo-pill">Demo build</span>
-        <p>UI preview only &mdash; no backend connected.</p>
+        <span className="sidebar__demo-pill">Local dev</span>
+        <p>No authentication &mdash; local development only.</p>
       </div>
     </aside>
   )

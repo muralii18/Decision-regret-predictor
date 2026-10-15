@@ -83,7 +83,8 @@ function AuthPlaceholder({ mode, onBack, onEnterApp }) {
             Continue to the demo dashboard
           </button>
           <p className="auth-card__hint">
-            The dashboard and New Decision form run locally on sample data — no sign-in required.
+            The dashboard and New Prediction form run locally against your own backend &mdash; no
+            sign-in is implemented yet.
           </p>
         </section>
       </main>

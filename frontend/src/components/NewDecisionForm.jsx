@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { createDecision, createPrediction, toDecisionPayload } from '../lib/api'
 import './NewDecisionForm.css'
 
 const CATEGORY_OPTIONS = [
@@ -23,7 +24,21 @@ const EMPTY_FORM = {
   risks: '',
 }
 
-// Per-field validation — returns a clear, user-facing message or ''.
+// Backend field name -> form field name, for mapping API `details` errors.
+const API_FIELD_TO_FORM = {
+  title: 'title',
+  category: 'category',
+  estimated_cost_usd: 'cost',
+  num_alternatives: 'alternatives',
+  confidence_level: 'confidence',
+  business_context: 'description',
+  expected_benefits: 'benefits',
+  identified_risks: 'risks',
+}
+
+// Per-field validation — mirrors the backend rules
+// (backend/src/validation/validate.js) so problems are caught before a
+// request is made. Returns a clear, user-facing message or ''.
 function validateField(name, value) {
   const trimmed = typeof value === 'string' ? value.trim() : value
 
@@ -31,6 +46,7 @@ function validateField(name, value) {
     case 'title':
       if (!trimmed) return 'Decision title is required.'
       if (trimmed.length < 3) return 'Decision title must be at least 3 characters.'
+      if (trimmed.length > 200) return 'Decision title must be at most 200 characters.'
       return ''
     case 'category':
       if (!trimmed) return 'Please select a decision category.'
@@ -42,13 +58,15 @@ function validateField(name, value) {
     case 'cost': {
       if (!trimmed) return 'Estimated financial cost is required.'
       const cost = Number(trimmed)
-      if (Number.isNaN(cost) || cost < 0) return 'Enter a valid cost of 0 or greater.'
+      if (Number.isNaN(cost) || cost <= 0) return 'Enter a cost greater than 0.'
       return ''
     }
     case 'alternatives': {
       if (!trimmed) return 'Number of alternatives considered is required.'
       const count = Number(trimmed)
-      if (!Number.isInteger(count) || count < 0) return 'Enter a whole number of 0 or greater.'
+      if (!Number.isInteger(count) || count < 0 || count > 1000) {
+        return 'Enter a whole number between 0 and 1000.'
+      }
       return ''
     }
     case 'confidence':
@@ -67,14 +85,6 @@ function validateField(name, value) {
   }
 }
 
-function formatCurrency(value) {
-  return Number(value).toLocaleString('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  })
-}
-
 function FieldError({ id, message }) {
   if (!message) return null
   return (
@@ -84,34 +94,40 @@ function FieldError({ id, message }) {
   )
 }
 
-function ConfirmationView({ decision, onBackToDashboard, onCaptureAnother }) {
+/**
+ * Shown when the decision was saved but the prediction request failed:
+ * the saved decision is preserved (no duplicate is ever created) and the
+ * server's explanation is displayed verbatim.
+ */
+function SavedWithoutPrediction({ decision, errorMessage, busy, onRetry, onBackToDashboard, onViewHistory }) {
   const rows = [
+    ['Decision ID', decision.id],
     ['Decision title', decision.title],
     ['Category', decision.category],
-    ['Description & business context', decision.description],
-    ['Estimated financial cost', formatCurrency(decision.cost)],
-    ['Alternatives considered', decision.alternatives],
-    ['Confidence level', decision.confidence],
-    ['Expected benefits', decision.benefits],
-    ['Main risks identified', decision.risks],
+    ['Decision date', decision.decision_date],
+    ['Estimated financial cost', Number(decision.estimated_cost_usd).toLocaleString('en-US', { style: 'currency', currency: 'USD' })],
+    ['Alternatives considered', String(decision.num_alternatives)],
+    ['Confidence level', decision.confidence_level],
+    ['Description & business context', decision.business_context],
+    ['Expected benefits', decision.expected_benefits],
+    ['Main risks identified', decision.identified_risks],
   ]
 
   return (
-    <section className="panel confirmation">
-      <div className="confirmation__icon" aria-hidden="true">
+    <section className="panel confirmation" role="alert">
+      <div className="confirmation__icon confirmation__icon--warning" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M20 6 9 17l-5-5" />
+          <path d="M12 9v4M12 17h.01" />
+          <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" />
         </svg>
       </div>
-      <h2 className="confirmation__title">Decision details captured</h2>
+      <h2 className="confirmation__title">Decision saved — prediction unavailable</h2>
       <p className="confirmation__text">
-        Your decision has been captured in this session. The details below are exactly what you
-        submitted.
+        Your decision was saved to the database with ID&nbsp;<strong>{decision.id}</strong>.
+        The prediction could not be generated, so <strong>no prediction is shown and none was
+        saved</strong>.
       </p>
-      <p className="confirmation__note">
-        No prediction has been generated. Regret-risk analysis will be available once the backend
-        and machine learning model are connected in a later step.
-      </p>
+      <p className="confirmation__note">{errorMessage}</p>
 
       <dl className="confirmation__summary">
         {rows.map(([label, value]) => (
@@ -123,22 +139,32 @@ function ConfirmationView({ decision, onBackToDashboard, onCaptureAnother }) {
       </dl>
 
       <div className="form-actions">
-        <button type="button" className="btn btn--primary" onClick={onBackToDashboard}>
-          Back to Dashboard
+        <button type="button" className="btn btn--primary" onClick={onRetry} disabled={busy}>
+          {busy ? 'Retrying…' : 'Retry prediction'}
         </button>
-        <button type="button" className="btn btn--secondary" onClick={onCaptureAnother}>
-          Capture Another Decision
+        <button type="button" className="btn btn--secondary" onClick={onViewHistory}>
+          View in History
+        </button>
+        <button type="button" className="btn btn--secondary" onClick={onBackToDashboard}>
+          Back to Dashboard
         </button>
       </div>
     </section>
   )
 }
 
-function NewDecisionForm({ onCancel }) {
+function NewDecisionForm({ onCancel, onViewHistory, onPredictionReady }) {
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [errors, setErrors] = useState({})
   const [submitAttempted, setSubmitAttempted] = useState(false)
-  const [capturedDecision, setCapturedDecision] = useState(null)
+  const [formError, setFormError] = useState(null)
+  const [phase, setPhase] = useState('editing') // 'editing' | 'submitting'
+  const [savedDecision, setSavedDecision] = useState(null)
+  const [predictionError, setPredictionError] = useState(null)
+  const [retrying, setRetrying] = useState(false)
+  // Synchronous in-flight guard: state alone cannot stop a double click in
+  // the same tick from firing two requests.
+  const inFlight = useRef(false)
 
   function handleChange(event) {
     const { name, value } = event.target
@@ -148,8 +174,25 @@ function NewDecisionForm({ onCancel }) {
     }
   }
 
-  function handleSubmit(event) {
+  function applyApiError(error) {
+    if (Array.isArray(error?.details) && error.details.length > 0) {
+      const fieldErrors = {}
+      const unmapped = []
+      for (const detail of error.details) {
+        const formField = API_FIELD_TO_FORM[detail.field]
+        if (formField) fieldErrors[formField] = detail.message
+        else unmapped.push(detail.message)
+      }
+      setErrors((prev) => ({ ...prev, ...fieldErrors }))
+      setFormError(unmapped.length > 0 ? unmapped.join(' ') : null)
+    } else {
+      setFormError(error?.message ?? 'The request failed. Please try again.')
+    }
+  }
+
+  async function handleSubmit(event) {
     event.preventDefault()
+    if (inFlight.current) return
     setSubmitAttempted(true)
 
     const nextErrors = {}
@@ -169,17 +212,53 @@ function NewDecisionForm({ onCancel }) {
       return
     }
 
-    setCapturedDecision({ ...formData })
+    inFlight.current = true
+    setFormError(null)
+    setPhase('submitting')
+
+    let decision = null
+    try {
+      // 1. Save the decision; the returned id is used for the prediction.
+      decision = await createDecision(toDecisionPayload(formData))
+    } catch (error) {
+      applyApiError(error)
+      setPhase('editing')
+      inFlight.current = false
+      return
+    }
+
+    // 2. Request a prediction for the saved decision. On failure the saved
+    //    decision is kept and no duplicate create is attempted.
+    try {
+      const prediction = await createPrediction(decision.id)
+      inFlight.current = false
+      onPredictionReady(decision, prediction)
+    } catch (error) {
+      setSavedDecision(decision)
+      setPredictionError(error?.message ?? 'The prediction request failed.')
+      setPhase('editing')
+      inFlight.current = false
+    }
   }
 
-  function resetForm() {
-    setFormData(EMPTY_FORM)
-    setErrors({})
-    setSubmitAttempted(false)
-    setCapturedDecision(null)
+  async function handleRetryPrediction() {
+    if (inFlight.current || !savedDecision) return
+    inFlight.current = true
+    setRetrying(true)
+    setPredictionError(null)
+    try {
+      const prediction = await createPrediction(savedDecision.id)
+      inFlight.current = false
+      setRetrying(false)
+      onPredictionReady(savedDecision, prediction)
+    } catch (error) {
+      setPredictionError(error?.message ?? 'The prediction request failed.')
+      setRetrying(false)
+      inFlight.current = false
+    }
   }
 
-  if (capturedDecision) {
+  if (savedDecision) {
     return (
       <>
         <div className="page-header">
@@ -188,14 +267,19 @@ function NewDecisionForm({ onCancel }) {
             <p>Capture a decision for regret analysis.</p>
           </div>
         </div>
-        <ConfirmationView
-          decision={capturedDecision}
+        <SavedWithoutPrediction
+          decision={savedDecision}
+          errorMessage={predictionError}
+          busy={retrying}
+          onRetry={handleRetryPrediction}
           onBackToDashboard={onCancel}
-          onCaptureAnother={resetForm}
+          onViewHistory={onViewHistory}
         />
       </>
     )
   }
+
+  const submitting = phase === 'submitting'
 
   return (
     <>
@@ -210,9 +294,17 @@ function NewDecisionForm({ onCancel }) {
         <div className="panel__header">
           <div>
             <h3 className="panel__title">Decision Details</h3>
-            <p className="panel__subtitle">Stored in this session only — no backend connected yet.</p>
+            <p className="panel__subtitle">
+              Saved to the backend, then scored by the trained ML model.
+            </p>
           </div>
         </div>
+
+        {formError && (
+          <p className="app-alert app-alert--error" role="alert">
+            {formError}
+          </p>
+        )}
 
         <form className="decision-form" onSubmit={handleSubmit} noValidate>
           <div className="decision-form__grid">
@@ -224,6 +316,7 @@ function NewDecisionForm({ onCancel }) {
                 type="text"
                 id="nd-title"
                 name="title"
+                maxLength="200"
                 value={formData.title}
                 onChange={handleChange}
                 placeholder="e.g. Approve Q4 supplier contract renewal"
@@ -270,7 +363,7 @@ function NewDecisionForm({ onCancel }) {
                   type="number"
                   id="nd-cost"
                   name="cost"
-                  min="0"
+                  min="0.01"
                   step="0.01"
                   inputMode="decimal"
                   value={formData.cost}
@@ -294,6 +387,7 @@ function NewDecisionForm({ onCancel }) {
                 id="nd-alternatives"
                 name="alternatives"
                 min="0"
+                max="1000"
                 step="1"
                 inputMode="numeric"
                 value={formData.alternatives}
@@ -344,6 +438,7 @@ function NewDecisionForm({ onCancel }) {
                 id="nd-description"
                 name="description"
                 rows="4"
+                maxLength="5000"
                 value={formData.description}
                 onChange={handleChange}
                 placeholder="What is being decided, and why does it matter to the business?"
@@ -362,6 +457,7 @@ function NewDecisionForm({ onCancel }) {
                 id="nd-benefits"
                 name="benefits"
                 rows="3"
+                maxLength="5000"
                 value={formData.benefits}
                 onChange={handleChange}
                 placeholder="What positive outcomes do you expect if this decision succeeds?"
@@ -380,6 +476,7 @@ function NewDecisionForm({ onCancel }) {
                 id="nd-risks"
                 name="risks"
                 rows="3"
+                maxLength="5000"
                 value={formData.risks}
                 onChange={handleChange}
                 placeholder="What could go wrong, and how severe would it be?"
@@ -391,11 +488,17 @@ function NewDecisionForm({ onCancel }) {
             </div>
           </div>
 
+          {submitting && (
+            <p className="form-status" role="status">
+              Saving your decision and requesting a prediction from the ML model…
+            </p>
+          )}
+
           <div className="form-actions">
-            <button type="submit" className="btn btn--primary">
-              Submit
+            <button type="submit" className="btn btn--primary" disabled={submitting}>
+              {submitting ? 'Submitting…' : 'Submit'}
             </button>
-            <button type="button" className="btn btn--secondary" onClick={onCancel}>
+            <button type="button" className="btn btn--secondary" onClick={onCancel} disabled={submitting}>
               Cancel
             </button>
           </div>

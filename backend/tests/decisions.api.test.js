@@ -326,3 +326,72 @@ test('protocol hygiene: bad JSON 400, oversize 413, unknown route 404, CORS allo
     assert.equal(denied.headers.get('access-control-allow-origin'), null)
   })
 })
+
+// ---------------------------------------------------------------------------
+// Frontend-contract tests: the exact shapes src/lib/api.js and the React
+// views consume. They pin the integration contract without weakening any
+// assertion above.
+// ---------------------------------------------------------------------------
+
+test('list rows expose the flattened outcome object the history UI renders', async () => {
+  await withAppServer(app, async (base) => {
+    const created = await (await createDecision(base, { decision_date: '2026-01-05' })).json()
+
+    const before = await (await fetch(`${base}/api/decisions`)).json()
+    assert.equal(before.data.length, 1)
+    assert.equal(before.data[0].outcome, null, 'no outcome recorded yet')
+    assert.equal(before.data[0].title, VALID_DECISION.title)
+    assert.ok(before.data[0].decision_date, 'decision_date is a plain ISO date string')
+    assert.ok(before.pagination && typeof before.pagination.total === 'number')
+
+    const recorded = await fetch(`${base}/api/decisions/${created.id}/outcomes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ outcome: 'unknown' }),
+    })
+    assert.equal(recorded.status, 200)
+
+    const after = await (await fetch(`${base}/api/decisions`)).json()
+    const row = after.data[0]
+    assert.equal(row.outcome.outcome, 'unknown', 'unknown stays unknown in list rows')
+    assert.equal(row.outcome.outcome_date, null)
+  })
+})
+
+test('decision detail carries everything the Results view renders', async () => {
+  await withAppServer(app, async (base) => {
+    const created = await (await createDecision(base)).json()
+
+    const predictionResponse = await fetch(`${base}/api/decisions/${created.id}/predictions`, {
+      method: 'POST',
+    })
+    assert.equal(predictionResponse.status, 201)
+
+    const detail = await (await fetch(`${base}/api/decisions/${created.id}`)).json()
+    for (const field of [
+      'id',
+      'title',
+      'decision_date',
+      'category',
+      'estimated_cost_usd',
+      'num_alternatives',
+      'confidence_level',
+      'business_context',
+      'expected_benefits',
+      'identified_risks',
+    ]) {
+      assert.ok(field in detail, `decision detail must include ${field}`)
+    }
+    assert.equal(detail.outcome, null)
+    assert.equal(detail.predictions.length, 1)
+
+    const prediction = detail.predictions[0]
+    assert.equal(prediction.decision_id, created.id)
+    assert.equal(prediction.probability_of_reversal, ML_SUCCESS_BODY.probability_of_reversal)
+    assert.equal(prediction.probability_percent, ML_SUCCESS_BODY.probability_percent)
+    assert.equal(prediction.predicted_class, ML_SUCCESS_BODY.predicted_class)
+    assert.equal(prediction.predicted_label, ML_SUCCESS_BODY.predicted_label)
+    assert.equal(prediction.disclaimer, ML_SUCCESS_BODY.disclaimer)
+    assert.deepEqual(prediction.provider_response, ML_SUCCESS_BODY)
+  })
+})
